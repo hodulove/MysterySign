@@ -5,173 +5,145 @@
     <title>미스터리 사인</title>
     <style>
         body { font-family: 'Pretendard', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; background-color: #f0f2f5; padding-bottom: 70px; }
-        
-        /* 상단 광고 영역 */
         .ad-top { width: 100%; max-width: 420px; height: 80px; background: #e2e8f0; margin: 15px 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.8rem; border: 1px dashed #cbd5e1; }
-
         .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; box-sizing: border-box; }
         .tabs { display: flex; margin-bottom: 1.5rem; background: #e2e8f0; border-radius: 12px; padding: 4px; }
         .tab { flex: 1; padding: 8px; cursor: pointer; border-radius: 10px; font-size: 0.9rem; font-weight: 600; transition: 0.2s; color: #64748b; }
         .tab.active { background: white; color: #6366f1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-
         .example-container { background: #f8fafc; padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: left; border-left: 5px solid #6366f1; }
-        .example { font-weight: 600; color: #64748b; font-size: 0.85rem; margin: 6px 0; letter-spacing: 0.5px; }
+        .example { font-weight: 600; color: #64748b; font-size: 0.85rem; margin: 6px 0; }
         .question { font-size: 2.2rem; font-weight: 800; margin: 1.2rem 0; color: #1e293b; }
-        
         input { width: 90%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1.2rem; margin-bottom: 1rem; text-align: center; outline: none; box-sizing: border-box; }
         .btn-group { display: flex; gap: 10px; justify-content: center; }
         button { flex: 1; padding: 0.9rem; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.2s; border: none; }
         .btn-check { background: #6366f1; color: white; }
         .btn-reveal { background: #f1f5f9; color: #64748b; }
-        
         .message { margin-top: 1.2rem; font-weight: bold; min-height: 3.5rem; line-height: 1.5; font-size: 0.95rem; }
         .success { color: #10b981; }
         .error { color: #ef4444; }
-
-        /* 하단 고정 광고 영역 */
         .ad-bottom { position: fixed; bottom: 0; width: 100%; height: 60px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; z-index: 1000; color: #94a3b8; font-size: 0.75rem; }
     </style>
 </head>
 <body>
 
-    <div class="ad-top"></div> <!-- 상단 -->
+    <div class="ad-top">  </div>
 
     <div class="card">
         <div class="tabs">
             <div id="tab-daily" class="tab active" onclick="switchMode('daily')">📅 데일리 퀴즈</div>
             <div id="tab-infinite" class="tab" onclick="switchMode('infinite')">♾️ 무한 모드</div>
         </div>
-
         <div id="mode-title" style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.5rem;">오늘의 도전</div>
-        
         <div class="example-container">
-            <div id="ex1" class="example">예시 1 로드 중...</div>
-            <div id="ex2" class="example">예시 2 로드 중...</div>
-            <div id="ex3" class="example">예시 3 로드 중...</div>
+            <div id="ex1" class="example">로드 중...</div>
+            <div id="ex2" class="example">로드 중...</div>
+            <div id="ex3" class="example">로드 중...</div>
         </div>
-        
         <div id="question-text" class="question">? ? ?</div>
-        <input type="number" id="user-answer" placeholder="정답 입력" onkeypress="if(event.keyCode==13) checkAnswer()">
-        
+        <input type="number" id="user-answer" placeholder="정답 입력" onkeypress="if(event.keyCode==13) _0x_chk()">
         <div class="btn-group">
-            <button id="btn-reveal" class="btn-reveal" onclick="revealAnswer()">정답 보기</button>
-            <button id="btn-check" class="btn-check" onclick="checkAnswer()">확인</button>
+            <button class="btn-reveal" onclick="_0x_rev()">정답 보기</button>
+            <button class="btn-check" onclick="_0x_chk()">확인</button>
         </div>
-        
         <div id="message" class="message"></div>
     </div>
 
-    <div class="ad-bottom"></div> <!-- 하단. -->
+    <div class="ad-bottom">   </div>
 
 <script>
-    let currentMode = 'daily';
-    let currentProblem = {};
-    const STORAGE_KEY = 'daily_quiz_status';
-
-    const ruleLibrary = [
-        { formula: (a1, a2, b1, b2) => a1 + a2 + b1 + b2, desc: "모든 자릿수 네 개를 더한 값입니다." },
-        { formula: (a1, a2, b1, b2) => Math.abs((a1 * a2) - (b1 * b2)), desc: "첫 번째 수 자릿수 곱과 두 번째 수 자릿수 곱의 차이입니다." },
-        { formula: (a1, a2, b1, b2) => (a1 + b1) * Math.abs(a2 - b2), desc: "십의 자리끼리의 합에 일의 자리끼리의 차이를 곱한 값입니다." },
-        { formula: (a1, a2, b1, b2) => Math.abs((a1 + a2) - (b1 * b2)), desc: "첫 번째 수의 자릿수 합과 두 번째 수의 자릿수 곱의 차이입니다." },
-        { formula: (a1, a2, b1, b2) => (a1 * b2) + (a2 * b1), desc: "두 숫자의 자릿수를 엇갈려 곱한 뒤 더한 값입니다." },
-        { formula: (a1, a2, b1, b2) => Math.abs((a1 * b1) - (a2 + b2)), desc: "십의 자리끼리의 곱과 일의 자리끼리의 합의 차이입니다." }
+    
+    const _0x_ops = [
+        (a, b) => a + b, 
+        (a, b) => a - b, 
+        (a, b) => a * b, 
+        (a) => Math.abs(a)
     ];
 
-    function switchMode(mode) {
-        if (currentMode === mode) return;
-        currentMode = mode;
-        document.getElementById('tab-daily').classList.toggle('active', mode === 'daily');
-        document.getElementById('tab-infinite').classList.toggle('active', mode === 'infinite');
-        document.getElementById('mode-title').innerText = mode === 'daily' ? '오늘의 도전 (매일 0시 초기화)' : '무한 모드';
-        resetUIState();
-        generateProblem();
-    }
+    let _0x_curM = 'daily';
+    let _0x_curP = {};
+    const _0x_key = 'daily_quiz_status';
 
-    function resetUIState() {
+
+    const _0x_lib = [
+        { f: (p1, p2, p3, p4) => _0x_ops[0](_0x_ops[0](p1, p2), _0x_ops[0](p3, p4)), d: "66qo65S8IOyekOumv+yImCDTrqwnDrvCDrjZTtlZwg6rCS7J6F64uI64ukLg==" },
+        { f: (p1, p2, p3, p4) => _0x_ops[3](_0x_ops[1](_0x_ops[2](p1, p2), _0x_ops[2](p3, p4))), d: "7LurIOuyiOynnCDshJwg7J6Q66as7IiYIOqzseqzvCDrjZTrsojsu7wg7IiYIOyekOumv+yImCDqs7HsnZwg7LCo7J207ZTrp4Tri6Qu" },
+        { f: (p1, p2, p3, p4) => _0x_ops[2](_0x_ops[0](p1, p3), _0x_ops[3](_0x_ops[1](p2, p4))), d: "7Iit7J2YIOyekOumrOumvCDtlZp67JeQIOyVvOydmCDsn6DsmqTrp4wg7LCo7J2066W8IOqzse2VpCDqsILsn6Xri6jri6Qu" },
+        { f: (p1, p2, p3, p4) => _0x_ops[3](_0x_ops[1](_0x_ops[0](p1, p2), _0x_ops[2](p3, p4))), d: "7LurIOuyiOynnCDshJ3snZwg7J6Q66as7IiYIO2VqeqzvCDrjZTrsojsu7wg7IiYIOqzseyZgCDssKjsnbTZTrp4Tri6Qu" },
+        { f: (p1, p2, p3, p4) => _0x_ops[0](_0x_ops[2](p1, p4), _0x_ops[2](p2, p3)), d: "65GQIOyInOyekOydmCDsnZDsnbTrvYTsnbTshJwg7JeH6rCI66CkIOqzseyVnCDrkpTr4CDrjZTtlZwg6rCS7J6F64uI64ukLg==" },
+        { f: (p1, p2, p3, p4) => _0x_ops[3](_0x_ops[1](_0x_ops[2](p1, p3), _0x_ops[0](p2, p4))), d: "7Iit7J2YIOyekOumrOumvCDqs6Hqs7wg7J6Q66as7IiYIO2VqeyYmCDssKjsnbTZTrp4Tri6Qu" }
+    ];
+
+    function switchMode(m) {
+        if (_0x_curM === m) return;
+        _0x_curM = m;
+        document.getElementById('tab-daily').classList.toggle('active', m === 'daily');
+        document.getElementById('tab-infinite').classList.toggle('active', m === 'infinite');
         document.getElementById('user-answer').disabled = false;
-        document.getElementById('btn-check').disabled = false;
         document.getElementById('user-answer').value = "";
         document.getElementById('message').innerHTML = "";
+        _0x_gen();
     }
 
-    function generateProblem() {
-        const now = new Date();
-        const dateString = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-        let seed;
+    function _0x_gen() {
+        const _0x_now = new Date();
+        const _0x_ds = `${_0x_now.getFullYear()}-${_0x_now.getMonth() + 1}-${_0x_now.getDate()}`;
+        let _0x_sd = _0x_curM === 'daily' ? 
+            (_0x_now.getFullYear() * 10000) + ((_0x_now.getMonth() + 1) * 100) + _0x_now.getDate() : 
+            Math.floor(Math.random() * 1000000);
 
-        if (currentMode === 'daily') {
-            seed = (now.getFullYear() * 10000) + ((now.getMonth() + 1) * 100) + now.getDate();
-            renderProblemBySeed(seed);
-            const status = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            if (status.date === dateString && status.completed) setDailyCompleted(status.ans);
-        } else {
-            seed = Math.floor(Math.random() * 1000000);
-            renderProblemBySeed(seed);
+        _0x_rnd(_0x_sd);
+        if (_0x_curM === 'daily') {
+            const _0x_st = JSON.parse(localStorage.getItem(_0x_key) || '{}');
+            if (_0x_st.date === _0x_ds && _0x_st.completed) _0x_fin(_0x_st.ans);
         }
     }
 
-    function renderProblemBySeed(seed) {
-        let s = seed;
-        const nextRand = () => {
-            s = (s * 9301 + 49297) % 233280;
-            return s / 233280;
+    function _0x_rnd(_0x_s) {
+        let _0x_v = _0x_s;
+        const _0x_nxt = () => { _0x_v = (_0x_v * 9301 + 49297) % 233280; return _0x_v / 233280; };
+        const _0x_r = _0x_lib[Math.floor(_0x_nxt() * _0x_lib.length)];
+        const _0x_gD = (n) => ({ a: Math.floor(n/10), b: n%10 });
+        const _0x_rn = () => Math.floor(_0x_nxt() * 89) + 10;
+        const _0x_mk = () => {
+            const n1 = _0x_rn(), n2 = _0x_rn(), d1 = _0x_gD(n1), d2 = _0x_gD(n2);
+            return { n1, n2, a: _0x_r.f(d1.a, d1.b, d2.a, d2.b) };
         };
 
-        const ruleObj = ruleLibrary[Math.floor(nextRand() * ruleLibrary.length)];
-        const getDigits = (n) => ({ d1: Math.floor(n/10), d2: n%10 });
-        const randNum = () => Math.floor(nextRand() * 89) + 10;
+        const _e1 = _0x_mk(), _e2 = _0x_mk(), _e3 = _0x_mk(), _q = _0x_mk();
+        _0x_curP = { a: _q.a, d: _0x_r.d, dt: `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}` };
 
-        const makeCase = () => {
-            const n = randNum(), m = randNum();
-            const dn = getDigits(n), dm = getDigits(m);
-            return { n, m, ans: ruleObj.formula(dn.d1, dn.d2, dm.d1, dm.d2) };
-        };
-
-        const e1 = makeCase(); e2 = makeCase(); e3 = makeCase();
-        const q = makeCase();
-        
-        const dateString = `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
-        currentProblem = { q_ans: q.ans, desc: ruleObj.desc, date: dateString };
-
-        document.getElementById('ex1').innerText = `예시 1: ${e1.n} ? ${e1.m} = ${e1.ans}`;
-        document.getElementById('ex2').innerText = `예시 2: ${e2.n} ? ${e2.m} = ${e2.ans}`;
-        document.getElementById('ex3').innerText = `예시 3: ${e3.n} ? ${e3.m} = ${e3.ans}`;
-        document.getElementById('question-text').innerText = `${q.n} ? ${q.m}`;
+        document.getElementById('ex1').innerText = `예시 1: ${_e1.n1} ? ${_e1.n2} = ${_e1.a}`;
+        document.getElementById('ex2').innerText = `예시 2: ${_e2.n1} ? ${_e2.n2} = ${_e2.a}`;
+        document.getElementById('ex3').innerText = `예시 3: ${_e3.n1} ? ${_e3.n2} = ${_e3.a}`;
+        document.getElementById('question-text').innerText = `${_q.n1} ? ${_q.n2}`;
     }
 
-    function setDailyCompleted(ans) {
-        document.getElementById('message').className = "message success";
-        document.getElementById('message').innerHTML = `🎉 오늘 이미 완료했습니다!<br>정답: ${ans} / 내일 다시 도전하세요!`;
-        document.getElementById('user-answer').disabled = true;
-        document.getElementById('btn-check').disabled = true;
-    }
-
-    function checkAnswer() {
-        const val = document.getElementById('user-answer').value;
-        if(!val) return;
-        if (parseInt(val) === currentProblem.q_ans) {
-            document.getElementById('message').className = "message success";
-            document.getElementById('message').innerText = "✅ 정답입니다!";
-            if (currentMode === 'daily') {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                    date: currentProblem.date, completed: true, ans: currentProblem.q_ans
-                }));
-                setTimeout(() => setDailyCompleted(currentProblem.q_ans), 1000);
+    function _0x_chk() {
+        const _0x_u = parseInt(document.getElementById('user-answer').value);
+        if (_0x_u === _0x_curP.a) {
+            document.getElementById('message').innerHTML = "<span class='success'>✅ 정답입니다!</span>";
+            if (_0x_curM === 'daily') {
+                localStorage.setItem(_0x_key, JSON.stringify({ date: _0x_curP.dt, completed: true, ans: _0x_u }));
+                setTimeout(() => _0x_fin(_0x_u), 1000);
             } else {
-                setTimeout(generateProblem, 1000);
+                setTimeout(_0x_gen, 1000);
             }
         } else {
-            document.getElementById('message').className = "message error";
-            document.getElementById('message').innerText = "❌ 다시 한 번 생각해보세요!";
+            document.getElementById('message').innerHTML = "<span class='error'>❌ 오답입니다!</span>";
         }
     }
 
-    function revealAnswer() {
-        document.getElementById('message').className = "message success";
-        document.getElementById('message').innerHTML = `정답은 ${currentProblem.q_ans} 입니다.<div style="font-weight: normal; color: #6366f1; font-size: 0.85rem; margin-top: 8px;">💡 해설: ${currentProblem.desc}</div>`;
+    function _0x_rev() {
+        const _0x_dec = decodeURIComponent(atob(_0x_curP.d).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+        document.getElementById('message').innerHTML = `정답: ${_0x_curP.a}<br><small style="color:#6366f1">💡 해설: ${_0x_dec}</small>`;
     }
 
-    window.onload = generateProblem;
+    function _0x_fin(a) {
+        document.getElementById('message').innerHTML = `<span class='success'>🎉 오늘 완료! 정답: ${a}</span>`;
+        document.getElementById('user-answer').disabled = true;
+    }
+
+    window.onload = _0x_gen;
 </script>
 </body>
 </html>
