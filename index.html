@@ -2,176 +2,131 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>미스터리 사인</title>
     <style>
-        body { font-family: 'Pretendard', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; background-color: #f0f2f5; padding-bottom: 70px; }
-        
-    
-        .ad-top { width: 100%; max-width: 420px; height: 80px; background: #e2e8f0; margin: 15px 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.8rem; border: 1px dashed #cbd5e1; }
-
-        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; box-sizing: border-box; }
+        body { font-family: 'Pretendard', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; background-color: #f0f2f5; padding-bottom: 80px; -webkit-user-select:none; user-select:none; }
+        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 420px; text-align: center; box-sizing: border-box; margin-top: 20px; }
         .tabs { display: flex; margin-bottom: 1.5rem; background: #e2e8f0; border-radius: 12px; padding: 4px; }
-        .tab { flex: 1; padding: 8px; cursor: pointer; border-radius: 10px; font-size: 0.9rem; font-weight: 600; transition: 0.2s; color: #64748b; }
+        .tab { flex: 1; padding: 10px; cursor: pointer; border-radius: 10px; font-size: 0.9rem; font-weight: 600; color: #64748b; }
         .tab.active { background: white; color: #6366f1; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-
-        .example-container { background: #f8fafc; padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: left; border-left: 5px solid #6366f1; }
-        .example { font-weight: 600; color: #64748b; font-size: 0.85rem; margin: 6px 0; letter-spacing: 0.5px; }
-        .question { font-size: 2.2rem; font-weight: 800; margin: 1.2rem 0; color: #1e293b; }
-        
-        input { width: 90%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1.2rem; margin-bottom: 1rem; text-align: center; outline: none; box-sizing: border-box; }
+        .hint-container { background: #f8fafc; padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: left; border-left: 5px solid #6366f1; }
+        .hint { font-weight: 600; color: #64748b; font-size: 0.85rem; margin: 8px 0; }
+        .question { font-size: 2.5rem; font-weight: 800; margin: 1.5rem 0; color: #1e293b; }
+        input { width: 100%; padding: 1.2rem; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1.3rem; margin-bottom: 1rem; text-align: center; outline: none; box-sizing: border-box; }
         .btn-group { display: flex; gap: 10px; justify-content: center; }
-        button { flex: 1; padding: 0.9rem; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.2s; border: none; }
+        button { flex: 1; padding: 1rem; border-radius: 12px; cursor: pointer; font-size: 1rem; font-weight: 700; border: none; transition: 0.2s; }
         .btn-check { background: #6366f1; color: white; }
         .btn-reveal { background: #f1f5f9; color: #64748b; }
-        
-        .message { margin-top: 1.2rem; font-weight: bold; min-height: 3.5rem; line-height: 1.5; font-size: 0.95rem; }
+        .message { margin-top: 1.5rem; font-weight: bold; min-height: 4rem; line-height: 1.6; font-size: 1rem; }
         .success { color: #10b981; }
         .error { color: #ef4444; }
-
-      
-        .ad-bottom { position: fixed; bottom: 0; width: 100%; height: 60px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; z-index: 1000; color: #94a3b8; font-size: 0.75rem; }
     </style>
 </head>
-<body>
-
-    <div class="ad-top"></div> <!-- 상단 -->
+<body oncontextmenu="return false">
 
     <div class="card">
+        <h2 style="margin-top:0; color:#1e293b;">🔍 미스터리 사인</h2>
         <div class="tabs">
-            <div id="tab-daily" class="tab active" onclick="switchMode('daily')">📅 데일리 퀴즈</div>
+            <div id="tab-daily" class="tab active" onclick="switchMode('daily')">📅 데일리 문제</div>
             <div id="tab-infinite" class="tab" onclick="switchMode('infinite')">♾️ 무한 모드</div>
         </div>
-
-        <div id="mode-title" style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.5rem;">오늘의 도전</div>
-        
-        <div class="example-container">
-            <div id="ex1" class="example">힌트 1 로드 중...</div>
-            <div id="ex2" class="example">힌트 2 로드 중...</div>
-            <div id="ex3" class="example">힌트 3 로드 중...</div>
+        <div class="hint-container">
+            <div id="hint1" class="hint"></div>
+            <div id="hint2" class="hint"></div>
+            <div id="hint3" class="hint"></div>
         </div>
-        
-        <div id="question-text" class="question">? ? ?</div>
-        <input type="number" id="user-answer" placeholder="정답 입력" onkeypress="if(event.keyCode==13) checkAnswer()">
-        
+        <div id="q-txt" class="question"></div>
+        <input type="number" id="u-in" placeholder="정답 입력" onkeypress="if(event.keyCode==13) checkAns()">
         <div class="btn-group">
-            <button id="btn-reveal" class="btn-reveal" onclick="revealAnswer()">정답 보기</button>
-            <button id="btn-check" class="btn-check" onclick="checkAnswer()">확인</button>
+            <button type="button" class="btn-reveal" onclick="reveal()">정답 보기</button>
+            <button type="button" class="btn-check" onclick="checkAns()">확인</button>
         </div>
-        
-        <div id="message" class="message"></div>
+        <div id="msg" class="message"></div>
     </div>
 
-    <div class="ad-bottom"></div> <!-- 하단. -->
-
 <script>
-    let currentMode = 'daily';
-    let currentProblem = {};
-    const STORAGE_KEY = 'daily_quiz_status';
+    const _ops = [(a,b)=>a+b, (a,b)=>a-b, (a,b)=>a*b, (a)=>Math.abs(a)];
+    let curMode = 'daily', quizData = {};
 
-    const ruleLibrary = [
-        { formula: (a1, a2, b1, b2) => a1 + a2 + b1 + b2, desc: "모든 자릿수 네 개를 더한 값입니다." },
-        { formula: (a1, a2, b1, b2) => Math.abs((a1 * a2) - (b1 * b2)), desc: "첫 번째 수 자릿수 곱과 두 번째 수 자릿수 곱의 차이입니다." },
-        { formula: (a1, a2, b1, b2) => (a1 + b1) * Math.abs(a2 - b2), desc: "십의 자리끼리의 합에 일의 자리끼리의 차이를 곱한 값입니다." },
-        { formula: (a1, a2, b1, b2) => Math.abs((a1 + a2) - (b1 * b2)), desc: "첫 번째 수의 자릿수 합과 두 번째 수의 자릿수 곱의 차이입니다." },
-        { formula: (a1, a2, b1, b2) => (a1 * b2) + (a2 * b1), desc: "두 숫자의 자릿수를 엇갈려 곱한 뒤 더한 값입니다." },
-        { formula: (a1, a2, b1, b2) => Math.abs((a1 * b1) - (a2 + b2)), desc: "십의 자리끼리의 곱과 일의 자리끼리의 합의 차이입니다." }
+    const rules = [
+        { f: (p1,p2,p3,p4) => _ops[0](_ops[0](p1,p2), _ops[0](p3,p4)), d: "모든 자리수(십의 자리, 일의 자리)를 전부 더한 값입니다." },
+        { f: (p1,p2,p3,p4) => _ops[3](_ops[1](_ops[2](p1,p2), _ops[2](p3,p4))), d: "첫 번째 수의 두 자리 곱과 두 번째 수의 두 자리 곱의 차이(절댓값)입니다." },
+        { f: (p1,p2,p3,p4) => _ops[2](_ops[0](p1,p3), _ops[3](_ops[1](p2,p4))), d: "십의 자리 합과 일의 자리 차이를 서로 곱한 값입니다." },
+        { f: (p1,p2,p3,p4) => _ops[3](_ops[1](_ops[0](p1,p2), _ops[2](p3,p4))), d: "첫 번째 수의 두 자리 합과 두 번째 수의 두 자리 곱의 차이입니다." },
+        { f: (p1,p2,p3,p4) => _ops[0](_ops[2](p1,p4), _ops[2](p2,p3)), d: "바깥쪽 숫자끼리의 곱과 안쪽 숫자끼리의 곱을 더한 값입니다." }
     ];
 
-    function switchMode(mode) {
-        if (currentMode === mode) return;
-        currentMode = mode;
-        document.getElementById('tab-daily').classList.toggle('active', mode === 'daily');
-        document.getElementById('tab-infinite').classList.toggle('active', mode === 'infinite');
-        document.getElementById('mode-title').innerText = mode === 'daily' ? '오늘의 도전 (매일 0시 초기화)' : '무한 모드';
-        resetUIState();
-        generateProblem();
+    function switchMode(m) {
+        if(curMode === m) return;
+        curMode = m;
+        document.getElementById('tab-daily').className = m === 'daily' ? 'tab active' : 'tab';
+        document.getElementById('tab-infinite').className = m === 'infinite' ? 'tab active' : 'tab';
+        initQuiz();
     }
 
-    function resetUIState() {
-        document.getElementById('user-answer').disabled = false;
-        document.getElementById('btn-check').disabled = false;
-        document.getElementById('user-answer').value = "";
-        document.getElementById('message').innerHTML = "";
-    }
+    function initQuiz() {
+        const msg = document.getElementById('msg');
+        const input = document.getElementById('u-in');
+        msg.innerHTML = "";
+        input.value = "";
+        input.disabled = false;
+        input.focus();
 
-    function generateProblem() {
-        const now = new Date();
-        const dateString = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-        let seed;
-
-        if (currentMode === 'daily') {
-            seed = (now.getFullYear() * 10000) + ((now.getMonth() + 1) * 100) + now.getDate();
-            renderProblemBySeed(seed);
-            const status = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            if (status.date === dateString && status.completed) setDailyCompleted(status.ans);
-        } else {
-            seed = Math.floor(Math.random() * 1000000);
-            renderProblemBySeed(seed);
-        }
-    }
-
-    function renderProblemBySeed(seed) {
-        let s = seed;
-        const nextRand = () => {
-            s = (s * 9301 + 49297) % 233280;
-            return s / 233280;
-        };
-
-        const ruleObj = ruleLibrary[Math.floor(nextRand() * ruleLibrary.length)];
-        const getDigits = (n) => ({ d1: Math.floor(n/10), d2: n%10 });
-        const randNum = () => Math.floor(nextRand() * 89) + 10;
-
-        const makeCase = () => {
-            const n = randNum(), m = randNum();
-            const dn = getDigits(n), dm = getDigits(m);
-            return { n, m, ans: ruleObj.formula(dn.d1, dn.d2, dm.d1, dm.d2) };
-        };
-
-        const e1 = makeCase(); e2 = makeCase(); e3 = makeCase();
-        const q = makeCase();
+        const d = new Date();
+        let seed = curMode === 'daily' ? (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate() : Math.floor(Math.random()*9999999);
         
-        const dateString = `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
-        currentProblem = { q_ans: q.ans, desc: ruleObj.desc, date: dateString };
-
-        document.getElementById('ex1').innerText = `힌트 1: ${e1.n} ? ${e1.m} = ${e1.ans}`;
-        document.getElementById('ex2').innerText = `힌트 2: ${e2.n} ? ${e2.m} = ${e2.ans}`;
-        document.getElementById('ex3').innerText = `힌트 3: ${e3.n} ? ${e3.m} = ${e3.ans}`;
-        document.getElementById('question-text').innerText = `${q.n} ? ${q.m}`;
+        generate(seed);
     }
 
-    function setDailyCompleted(ans) {
-        document.getElementById('message').className = "message success";
-        document.getElementById('message').innerHTML = `🎉 오늘 이미 완료했습니다!<br>정답: ${ans} / 내일 다시 도전하세요!`;
-        document.getElementById('user-answer').disabled = true;
-        document.getElementById('btn-check').disabled = true;
+    function generate(s) {
+        let v = s;
+        const nxt = () => { v = (v * 9301 + 49297) % 233280; return v / 233280; };
+        const rIdx = Math.floor(nxt() * rules.length);
+        const rule = rules[rIdx];
+        const mk = () => {
+            const n1 = Math.floor(nxt() * 80) + 10;
+            const n2 = Math.floor(nxt() * 80) + 10;
+            return { n1, n2, a: rule.f(Math.floor(n1/10), n1%10, Math.floor(n2/10), n2%10) };
+        };
+        const h1 = mk(), h2 = mk(), h3 = mk(), q = mk();
+        quizData = { ans: q.a, desc: rule.d };
+        document.getElementById('hint1').innerText = `힌트 1: ${h1.n1} ? ${h1.n2} = ${h1.a}`;
+        document.getElementById('hint2').innerText = `힌트 2: ${h2.n1} ? ${h2.n2} = ${h2.a}`;
+        document.getElementById('hint3').innerText = `힌트 3: ${h3.n1} ? ${h3.n2} = ${h3.a}`;
+        document.getElementById('q-txt').innerText = `${q.n1} ? ${q.n2}`;
     }
 
-    function checkAnswer() {
-        const val = document.getElementById('user-answer').value;
-        if(!val) return;
-        if (parseInt(val) === currentProblem.q_ans) {
-            document.getElementById('message').className = "message success";
-            document.getElementById('message').innerText = "✅ 정답입니다!";
-            if (currentMode === 'daily') {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                    date: currentProblem.date, completed: true, ans: currentProblem.q_ans
-                }));
-                setTimeout(() => setDailyCompleted(currentProblem.q_ans), 1000);
+    function checkAns() {
+        const uIn = document.getElementById('u-in');
+        const u = parseInt(uIn.value);
+        const msg = document.getElementById('msg');
+        
+        if(u === quizData.ans) {
+            if(curMode === 'infinite') {
+                msg.innerHTML = "<span class='success'>✅ 정답! 다음 문제로 이동...</span>";
+                uIn.disabled = true;
+                setTimeout(() => { initQuiz(); }, 500);
             } else {
-                setTimeout(generateProblem, 1000);
+                msg.innerHTML = "<span class='success'>✅ 정답입니다! 오늘의 문제를 풀었습니다.</span>";
+                uIn.disabled = true;
             }
         } else {
-            document.getElementById('message').className = "message error";
-            document.getElementById('message').innerText = "❌ 다시 한 번 생각해보세요!";
+            msg.innerHTML = "<span class='error'>❌ 정답이 아닙니다. 다시 시도하세요.</span>";
+            uIn.value = "";
+            uIn.focus();
         }
     }
 
-    function revealAnswer() {
-        document.getElementById('message').className = "message success";
-        document.getElementById('message').innerHTML = `정답은 ${currentProblem.q_ans} 입니다.<div style="font-weight: normal; color: #6366f1; font-size: 0.85rem; margin-top: 8px;">💡 해설: ${currentProblem.desc}</div>`;
+    function reveal() {
+        document.getElementById('msg').innerHTML = `정답: <strong>${quizData.ans}</strong><br><span style="color:#6366f1; font-size:0.85rem;">💡 문제 해설: ${quizData.desc}</span>`;
     }
 
-    window.onload = generateProblem;
+    document.addEventListener('keydown', e => {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) e.preventDefault();
+    });
+
+    window.onload = initQuiz;
 </script>
 </body>
 </html>
