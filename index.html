@@ -95,9 +95,12 @@
     function generate(s) {
         let v = s;
         const nxt = () => { v = (v * 9301 + 49297) % 233280; return v / 233280; };
+        
         const rIdx = Math.floor(nxt() * rules.length);
         const rule = rules[rIdx];
-        let mul = (rIdx === 8) ? Math.floor(nxt() * 8) + 2 : null;
+        
+        // 배수 확률 개선 (Math.random 사용)
+        let mul = (rIdx === 8) ? Math.floor(Math.random() * 8) + 2 : null;
 
         const mk = () => {
             const n1 = Math.floor(nxt() * 80) + 10;
@@ -109,6 +112,7 @@
 
         const h1 = mk(), h2 = mk(), h3 = mk(), q = mk();
         quizData = { ans: q.a, desc: rule.d(mul) };
+
         document.getElementById('hint1').innerText = `힌트 1: ${h1.n1} ? ${h1.n2} = ${h1.a}`;
         document.getElementById('hint2').innerText = `힌트 2: ${h2.n1} ? ${h2.n2} = ${h2.a}`;
         document.getElementById('hint3').innerText = `힌트 3: ${h3.n1} ? ${h3.n2} = ${h3.a}`;
@@ -156,7 +160,6 @@
         btnRev.style.display = "none";
         
         if (curMode === 'daily') {
-            // 데일리 모드면 버튼 그룹을 통째로 숨김 (사족 문구 없음)
             btnGroup.style.display = "none";
         } else {
             btnMain.innerText = "다음 문제";
