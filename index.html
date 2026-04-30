@@ -133,9 +133,9 @@
         const dateString = `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`;
         currentProblem = { q_ans: q.ans, desc: ruleObj.desc, date: dateString };
 
-        document.getElementById('ex1').innerText = `예시 1: ${e1.n} ? ${e1.m} = ${e1.ans}`;
-        document.getElementById('ex2').innerText = `예시 2: ${e2.n} ? ${e2.m} = ${e2.ans}`;
-        document.getElementById('ex3').innerText = `예시 3: ${e3.n} ? ${e3.m} = ${e3.ans}`;
+        document.getElementById('ex1').innerText = `힌트 1: ${e1.n} ? ${e1.m} = ${e1.ans}`;
+        document.getElementById('ex2').innerText = `힌트 2: ${e2.n} ? ${e2.m} = ${e2.ans}`;
+        document.getElementById('ex3').innerText = `힌트 3: ${e3.n} ? ${e3.m} = ${e3.ans}`;
         document.getElementById('question-text').innerText = `${q.n} ? ${q.m}`;
     }
 
