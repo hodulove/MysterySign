@@ -37,24 +37,30 @@
             <div id="hint3" class="hint"></div>
         </div>
         <div id="q-txt" class="question"></div>
-        <input type="number" id="u-in" placeholder="정답 입력" onkeypress="if(event.keyCode==13) checkAns()">
-        <div class="btn-group">
-            <button type="button" class="btn-reveal" onclick="reveal()">정답 보기</button>
-            <button type="button" class="btn-check" onclick="checkAns()">확인</button>
+        <input type="number" id="u-in" placeholder="정답 입력" onkeypress="if(event.keyCode==13) handleAction()">
+        <div class="btn-group" id="ctrl-btns">
+            <button type="button" class="btn-reveal" id="btn-rev" onclick="reveal()">정답 보기</button>
+            <button type="button" class="btn-check" id="btn-main" onclick="handleAction()">확인</button>
         </div>
         <div id="msg" class="message"></div>
     </div>
 
 <script>
-    const _ops = [(a,b)=>a+b, (a,b)=>a-b, (a,b)=>a*b, (a)=>Math.abs(a)];
-    let curMode = 'daily', quizData = {};
+    let curMode = 'daily', quizData = {}, isRevealed = false;
 
     const rules = [
-        { f: (p1,p2,p3,p4) => _ops[0](_ops[0](p1,p2), _ops[0](p3,p4)), d: "모든 자리수(십의 자리, 일의 자리)를 전부 더한 값입니다." },
-        { f: (p1,p2,p3,p4) => _ops[3](_ops[1](_ops[2](p1,p2), _ops[2](p3,p4))), d: "첫 번째 수의 두 자리 곱과 두 번째 수의 두 자리 곱의 차이(절댓값)입니다." },
-        { f: (p1,p2,p3,p4) => _ops[2](_ops[0](p1,p3), _ops[3](_ops[1](p2,p4))), d: "십의 자리 합과 일의 자리 차이를 서로 곱한 값입니다." },
-        { f: (p1,p2,p3,p4) => _ops[3](_ops[1](_ops[0](p1,p2), _ops[2](p3,p4))), d: "첫 번째 수의 두 자리 합과 두 번째 수의 두 자리 곱의 차이입니다." },
-        { f: (p1,p2,p3,p4) => _ops[0](_ops[2](p1,p4), _ops[2](p2,p3)), d: "바깥쪽 숫자끼리의 곱과 안쪽 숫자끼리의 곱을 더한 값입니다." }
+        { f: (n1, n2, p1, p2, p3, p4) => (p1**2 + p2**2) + (p3**2 + p4**2), d: () => "각 자릿수를 각각 제곱하여 모두 더한 값입니다." },
+        { f: (n1, n2, p1, p2, p3, p4) => Math.floor(n1 / (p3 + p4 || 1)) + (n1 % (p3 + p4 || 1)), d: () => "첫 번째 수를 두 번째 수의 자릿수 합으로 나눈 몫과 나머지를 더한 값입니다." },
+        { f: (n1, n2, p1, p2, p3, p4) => Math.pow(p1 - p2, 2) + Math.pow(p3 - p4, 2), d: () => "첫 번째 수와 두 번째 수의 자릿수 차이 제곱들의 합입니다." },
+        { f: (n1, n2, p1, p2, p3, p4) => Math.abs(Math.pow(p1 - p2, 2) - Math.pow(p3 - p4, 2)), d: () => "각 수의 자릿수 차이 제곱들 사이의 차이 값입니다." },
+        { f: (n1, n2, p1, p2, p3, p4) => Math.abs(n1 - n2) + (p1 + p2 + p3 + p4), d: () => "큰 수에서 작은 수를 뺀 값에 모든 자릿수의 합을 더한 값입니다." },
+        { f: (n1, n2, p1, p2, p3, p4) => (p1 + p2) * (p3 + p4), d: () => "각 숫자의 자릿수 합끼리 서로 곱한 값입니다." },
+        { f: (n1, n2, p1, p2, p3, p4) => (p1 * p2 * p3 * p4) + (n1 + n2), d: () => "모든 자릿수를 곱한 값에 두 수의 전체 합을 더한 값입니다." },
+        { f: (n1, n2, p1, p2, p3, p4) => Math.pow(p1 - p3, 2) + Math.pow(p2 - p4, 2), d: () => "십의 자리끼리, 일의 자리끼리 차이의 제곱을 더한 값입니다." },
+        { 
+            f: (n1, n2, p1, p2, p3, p4, mul) => (Math.max(n1, n2) * mul) - Math.min(n1, n2), 
+            d: (mul) => `큰 숫자에 ${mul}을 곱한 뒤 작은 숫자를 뺀 값입니다.` 
+        }
     ];
 
     function switchMode(m) {
@@ -68,14 +74,21 @@
     function initQuiz() {
         const msg = document.getElementById('msg');
         const input = document.getElementById('u-in');
+        const btnMain = document.getElementById('btn-main');
+        const btnRev = document.getElementById('btn-rev');
+        const btnGroup = document.getElementById('ctrl-btns');
+
+        isRevealed = false;
         msg.innerHTML = "";
         input.value = "";
         input.disabled = false;
+        btnGroup.style.display = "flex";
+        btnMain.innerText = "확인";
+        btnRev.style.display = "block";
         input.focus();
 
         const d = new Date();
         let seed = curMode === 'daily' ? (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate() : Math.floor(Math.random()*9999999);
-        
         generate(seed);
     }
 
@@ -84,17 +97,30 @@
         const nxt = () => { v = (v * 9301 + 49297) % 233280; return v / 233280; };
         const rIdx = Math.floor(nxt() * rules.length);
         const rule = rules[rIdx];
+        let mul = (rIdx === 8) ? Math.floor(nxt() * 8) + 2 : null;
+
         const mk = () => {
             const n1 = Math.floor(nxt() * 80) + 10;
             const n2 = Math.floor(nxt() * 80) + 10;
-            return { n1, n2, a: rule.f(Math.floor(n1/10), n1%10, Math.floor(n2/10), n2%10) };
+            const p1 = Math.floor(n1 / 10), p2 = n1 % 10;
+            const p3 = Math.floor(n2 / 10), p4 = n2 % 10;
+            return { n1, n2, a: rule.f(n1, n2, p1, p2, p3, p4, mul) };
         };
+
         const h1 = mk(), h2 = mk(), h3 = mk(), q = mk();
-        quizData = { ans: q.a, desc: rule.d };
+        quizData = { ans: q.a, desc: rule.d(mul) };
         document.getElementById('hint1').innerText = `힌트 1: ${h1.n1} ? ${h1.n2} = ${h1.a}`;
         document.getElementById('hint2').innerText = `힌트 2: ${h2.n1} ? ${h2.n2} = ${h2.a}`;
         document.getElementById('hint3').innerText = `힌트 3: ${h3.n1} ? ${h3.n2} = ${h3.a}`;
         document.getElementById('q-txt').innerText = `${q.n1} ? ${q.n2}`;
+    }
+
+    function handleAction() {
+        if (isRevealed && curMode === 'infinite') {
+            initQuiz();
+            return;
+        }
+        checkAns();
     }
 
     function checkAns() {
@@ -103,15 +129,10 @@
         const msg = document.getElementById('msg');
         
         if(u === quizData.ans) {
-            if(curMode === 'infinite') {
-                msg.innerHTML = "<span class='success'>✅ 정답! 다음 문제로 이동...</span>";
-                uIn.disabled = true;
-                setTimeout(() => { initQuiz(); }, 500);
-            } else {
-                // 데일리 퀴즈 완료 문구 수정
-                msg.innerHTML = `<span class='success'>🎉 오늘 이미 완료했습니다!<br>정답: ${quizData.ans} / 내일 다시 도전하세요!</span>`;
-                uIn.disabled = true;
-            }
+            msg.innerHTML = "<span class='success'>✅ 정답입니다!</span>";
+            isRevealed = true;
+            uIn.disabled = true;
+            finishStep();
         } else {
             msg.innerHTML = "<span class='error'>❌ 정답이 아닙니다. 다시 시도하세요.</span>";
             uIn.value = "";
@@ -120,13 +141,31 @@
     }
 
     function reveal() {
+        isRevealed = true;
+        const uIn = document.getElementById('u-in');
         document.getElementById('msg').innerHTML = `정답: <strong>${quizData.ans}</strong><br><span style="color:#6366f1; font-size:0.85rem;">💡 문제 해설: ${quizData.desc}</span>`;
+        uIn.disabled = true;
+        finishStep();
+    }
+
+    function finishStep() {
+        const btnMain = document.getElementById('btn-main');
+        const btnRev = document.getElementById('btn-rev');
+        const btnGroup = document.getElementById('ctrl-btns');
+
+        btnRev.style.display = "none";
+        
+        if (curMode === 'daily') {
+            // 데일리 모드면 버튼 그룹을 통째로 숨김 (사족 문구 없음)
+            btnGroup.style.display = "none";
+        } else {
+            btnMain.innerText = "다음 문제";
+        }
     }
 
     document.addEventListener('keydown', e => {
         if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) e.preventDefault();
     });
-
     window.onload = initQuiz;
 </script>
 </body>
